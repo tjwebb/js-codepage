@@ -1,6 +1,6 @@
 /* cpexcel.js (C) 2013-2014 SheetJS -- http://sheetjs.com */
 /*jshint -W100 */
-var cptable = {version:"1.3.7"};
+var cptable = {version:"1.3.8"};
 cptable[874] = (function(){ var d = "\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~€����…�����������‘’“”•–—�������� กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรฤลฦวศษสหฬอฮฯะัาำิีึืฺุู����฿เแโใไๅๆ็่้๊๋์ํ๎๏๐๑๒๓๔๕๖๗๘๙๚๛����", D = [], e = {}; for(var i=0;i!=d.length;++i) { if(d.charCodeAt(i) !== 0xFFFD) e[d[i]] = i; D[i] = d.charAt(i); } return {"enc": e, "dec": D }; })();
 cptable[932] = (function(){ var d = [], e = {}, D = [], j;
 D[0] = "\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~���������������������������������｡｢｣､･ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝﾞﾟ��������������������������������".split("");
@@ -868,7 +868,6 @@ if (typeof module !== 'undefined' && module.exports) module.exports = cptable;
               else { w -= 65536; out[j++] = EE[0xD800 + ((w>>10)&1023)]; out[j++] = EE[0xDC00 + (w&1023)]; }
             }
           }
-          out.length = j;
           out = out.slice(0,j);
         } else {
           out = Buffer(len);
@@ -906,8 +905,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = cptable;
             mdb[2*i] = DD[j]; mdb[2*i+1] = DD[j+1];
           }
         }
-        mdb.length = 2 * len;
-        return mdb.toString('ucs2');
+        return mdb.toString('ucs2', 0, 2 * len);
       };
     };
     var dbcs_encode = function make_dbcs_encode(cp) {
@@ -927,7 +925,6 @@ if (typeof module !== 'undefined' && module.exports) module.exports = cptable;
             j = data.charCodeAt(i)*2;
             out[k++] = EE[j+1] || EE[j]; if(EE[j+1] > 0) out[k++] = EE[j];
           }
-          out.length = k;
           out = out.slice(0,k);
         } else if(Buffer.isBuffer(data)) {
           for(i = k = 0; i < len; ++i) {
@@ -942,7 +939,6 @@ if (typeof module !== 'undefined' && module.exports) module.exports = cptable;
               j=2*(0xDC00 + (jj&1023)); out[k++] = EE[j+1] || EE[j]; if(EE[j+1] > 0) out[k++] = EE[j];
             }
           }
-          out.length = k;
           out = out.slice(0,k);
         } else {
           for(i = k = 0; i < len; i++) {
@@ -986,14 +982,12 @@ if (typeof module !== 'undefined' && module.exports) module.exports = cptable;
             out[k++] = DD[j]; out[k++] = DD[j+1];
           }
         }
-        out.length = k;
-        return out.toString('ucs2');
+        return out.toString('ucs2', 0, k);
       };
     };
     magic_decode[65001] = function utf8_d(data) {
       var len = data.length, w = 0, ww = 0;
       if(4 * len > mdl) { mdl = 4 * len; mdb = new Buffer(mdl); }
-      mdb.length = 0;
       var i = 0;
       if(len >= 3 && data[0] == 0xEF) if(data[1] == 0xBB && data[2] == 0xBF) i = 3;
       for(var j = 1, k = 0, D = 0; i < len; i+=j) {
@@ -1008,8 +1002,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = cptable;
           mdb[k++] = ww&255; mdb[k++] = ww>>>8; mdb[k++] = w&255; mdb[k++] = (w>>>8)&255;
         }
       }
-      mdb.length = k;
-      return mdb.toString('ucs2');
+      return mdb.toString('ucs2', 0, k);
     };
     magic_encode[65001] = function utf8_e(data, ofmt) {
       var len = data.length, w = 0, ww = 0, j = 0;
@@ -1034,10 +1027,9 @@ if (typeof module !== 'undefined' && module.exports) module.exports = cptable;
           mdb[j++] = 128 + (w&63);
         }
       }
-      mdb.length = j;
-      if(ofmt === undefined || ofmt === 'buf') return mdb;
-      if(ofmt !== 'arr') return mdb.toString('binary');
-      return [].slice.call(mdb);
+      if(ofmt === undefined || ofmt === 'buf') return mdb.slice(0, j);
+      if(ofmt !== 'arr') return mdb.toString('binary', 0, j);
+      return [].slice.call(mdb, 0, j);
     };
   }
 
@@ -1186,7 +1178,6 @@ if (typeof module !== 'undefined' && module.exports) module.exports = cptable;
       default: throw new Error("Unsupported magic: " + cp + " " + magic[cp]);
     }
     else throw new Error("Unrecognized CP: " + cp);
-    out.length = j;
     out = out.slice(0,j);
     if(typeof Buffer === 'undefined') return (ofmt == 'str') ? out.map(sfcc).join("") : out;
     if(ofmt === undefined || ofmt === 'buf') return out;
